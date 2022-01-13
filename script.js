@@ -4,7 +4,7 @@ const colors = require('colors');
 
 function numPrime(min, max) {
   let colorArr = ["green", "yellow", "red"];
-  if ((min > max) || (min < 0)) throw Error("Не верно задан диапазон");
+  if ((min > max) || (min < 0)||(isNaN(min)||(isNaN(max)))) console.log(colors.red("Не верно задан диапазон или это не числа"));
 
   let j = 0;
   for (let i = 2; i <= max; i++) {
@@ -14,6 +14,6 @@ function numPrime(min, max) {
   }
 }
 
-numPrime(1, 100);
+numPrime(2, 100);
 
 
