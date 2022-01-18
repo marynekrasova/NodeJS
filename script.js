@@ -1,19 +1,49 @@
 "use strict";
-//Task 1
-const colors = require('colors');
+//Task 2
+const EventEmitter = require('events');
+class MyEmitter extends EventEmitter {};
 
-function numPrime(min, max) {
-  let colorArr = ["green", "yellow", "red"];
-  if ((min > max) || (min < 0)||(isNaN(min)||(isNaN(max)))) console.log(colors.red("Не верно задан диапазон или это не числа"));
+const emitter = new MyEmitter();
+emitter.on('endtime', () => {
+  console.log('"Время истекло"');
+});
+emitter.on('outputtime', (days,hours,minutes,seconds) => {
+  console.log(`${days} days ${hours} hours ${minutes} minutes ${seconds}seconds`);
+});
 
-  let j = 0;
-  for (let i = 2; i <= max; i++) {
-    let text = colors[colorArr[j]] && colors[colorArr[j]](i);
-    console.log(text);
-    j = j === 2 ? 0 : j + 1;
-  }
+function countDownTimer(endtime) {
+  let t = Date.parse(endtime) - Date.parse(new Date());
+  let seconds = Math.floor((t / 1000) % 60);
+  let minutes = Math.floor((t / 1000 / 60) % 60);
+  let hours = Math.floor((t / (1000 * 60 * 60)) % 24);
+  let days = Math.floor(t / (1000 * 60 * 60 * 24));
+  return {
+    'total': t,
+    'days': days,
+    'hours': hours,
+    'minutes': minutes,
+    'seconds': seconds
+  };
 }
 
-numPrime(2, 100);
+function initializeClock(endtime) {
+  function updateClock() {
+    let t = countDownTimer(endtime);
+    let days = t.days;
+    let hours = ('0' + t.hours).slice(-2);
+    let minutes = ('0' + t.minutes).slice(-2);
+    let seconds = ('0' + t.seconds).slice(-2);
+    if (t.total <= 0) {
+      clearInterval(timeinterval);
+      emitter.emit('endtime');
+    }
+    emitter.emit('outputtime', days,hours,minutes,seconds);
+  }
 
+  updateClock();
+  let timeinterval = setInterval(updateClock, 1000);
+}
 
+let deadline = "January 18 2022 19:40:00 GMT+0300";
+
+initializeClock(deadline);
