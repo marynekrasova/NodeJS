@@ -1,49 +1,28 @@
 "use strict";
 //Task 2
-const EventEmitter = require('events');
-class MyEmitter extends EventEmitter {};
+const fs = require('fs');
+const readStream = fs.createReadStream('./access1.log', 'utf8');
+const writeStreamFirst = fs.createWriteStream('./89.123.1.41.log',  { flags: 'a', encoding: 'utf8' });
+const writeStreamSecond = fs.createWriteStream('./34.48.240.111.log',  { flags: 'a', encoding: 'utf8' });
 
-const emitter = new MyEmitter();
-emitter.on('endtime', () => {
-  console.log('"Время истекло"');
-});
-emitter.on('outputtime', (days,hours,minutes,seconds) => {
-  console.log(`${days} days ${hours} hours ${minutes} minutes ${seconds}seconds`);
-});
+readStream.on('data', (chunk) => {
+  console.log('Start');
+  let arrayOfStrings = chunk.split('\n');
 
-function countDownTimer(endtime) {
-  let t = Date.parse(endtime) - Date.parse(new Date());
-  let seconds = Math.floor((t / 1000) % 60);
-  let minutes = Math.floor((t / 1000 / 60) % 60);
-  let hours = Math.floor((t / (1000 * 60 * 60)) % 24);
-  let days = Math.floor(t / (1000 * 60 * 60 * 24));
-  return {
-    'total': t,
-    'days': days,
-    'hours': hours,
-    'minutes': minutes,
-    'seconds': seconds
-  };
-}
-
-function initializeClock(endtime) {
-  function updateClock() {
-    let t = countDownTimer(endtime);
-    let days = t.days;
-    let hours = ('0' + t.hours).slice(-2);
-    let minutes = ('0' + t.minutes).slice(-2);
-    let seconds = ('0' + t.seconds).slice(-2);
-    if (t.total <= 0) {
-      clearInterval(timeinterval);
-      emitter.emit('endtime');
+  arrayOfStrings.forEach(el =>
+  {
+    if(el.indexOf('89.123.1.41') !== -1) {
+      writeStreamFirst.write(el);
+      writeStreamFirst.write('\n');
+    } else if (el.indexOf('34.48.240.111') !== -1)
+    {
+      writeStreamSecond.write(el);
+      writeStreamSecond.write('\n');
     }
-    emitter.emit('outputtime', days,hours,minutes,seconds);
-  }
+  })
+});
 
-  updateClock();
-  let timeinterval = setInterval(updateClock, 1000);
-}
+readStream.on('end', () => console.log('File reading finished'));
+readStream.on('error', () => console.log(err));
 
-let deadline = "January 18 2022 19:40:00 GMT+0300";
 
-initializeClock(deadline);
