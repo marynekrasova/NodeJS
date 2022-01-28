@@ -1,47 +1,25 @@
 "use strict";
 //Task 4
-const fsPromis = require('fs/promises');
 const fs = require('fs');
 const {lstatSync} = require('fs');
 const path = require('path');
-const inquirer = require('inquirer');
+const http = require('http');
 
-let executionDir = process.cwd();
+(async () => {
+  const isFile = (path) => lstatSync(path).isFile();
 
-class ListItem {
-  constructor(path, fileName) {
-    this.path = path;
-    this.fileName = fileName;
-  }
+  http.createServer((req, res) => {
 
-  get isDir() {
-    return lstatSync(this.path).isDirectory();
-  }
-}
-const run = async () => {
-  const list = await fsPromis.readdir(executionDir);
-  const items = list.map(fileName =>
-    new ListItem(path.join(executionDir, fileName), fileName));
+    const fullPath = path.join(process.cwd(), req.url);
 
-  const item = await inquirer.prompt([
-    {
-      name: 'fileName',
-      type: 'list', // input, number, confirm, list, checkbox, password
-      message: 'Выберите файл для чтения',
-      choices: items.map(item => ({name: item.fileName, value: item})),
-    }
-  ]).then(answer => answer.fileName);
+    if (!fs.existsSync(fullPath)) return res.end('Не наеден файл');
 
-  if (item.isDir) {
-    executionDir = item.path;
-    return await run();
-  } else {
-    const data = await fsPromis.readFile(item.path, 'utf-8');
-    const writeStreamFirst = fs.createWriteStream('./89.123.1.41.log', {flags: 'a', encoding: 'utf8'});
-    const writeStreamSecond = fs.createWriteStream('./34.48.240.111.log', {flags: 'a', encoding: 'utf8'});
+    if (isFile(fullPath)) {
+      let data = fs.createReadStream(fullPath, 'utf-8');
+      const writeStreamFirst = fs.createWriteStream('./89.123.1.41.log', {flags: 'a', encoding: 'utf8'});
+      const writeStreamSecond = fs.createWriteStream('./34.48.240.111.log', {flags: 'a', encoding: 'utf8'});
 
-    try {
-      function readFile(chunk) {
+      data.on('data', (chunk) => {
         console.log('Start');
         let arrayOfStrings = chunk.split('\n');
 
@@ -49,20 +27,31 @@ const run = async () => {
           if (el.indexOf('89.123.1.41') !== -1) {
             writeStreamFirst.write(el);
             writeStreamFirst.write('\n');
+
           } else if (el.indexOf('34.48.240.111') !== -1) {
             writeStreamSecond.write(el);
             writeStreamSecond.write('\n');
           }
         })
-        console.log('File reading finished')
-      }
-      readFile(data);
+      });
 
-    } catch (e) {
-      console.log(Error); // (3)
-
+      return data.pipe(res);
     }
-  }
-};
 
-run();
+    let linksList = '';
+
+    fs.readdirSync(fullPath)
+      .forEach(fileName => {
+        const filePath = path.join(req.url, fileName);
+        linksList += `<li><a href="${filePath}">${fileName}</a></li>`;
+      });
+    const HTML = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8').replace('##linksList', linksList);
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+    })
+    return res.end(HTML);
+
+  }).listen(5555);
+})();
+
+
