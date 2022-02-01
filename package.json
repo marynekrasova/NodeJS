@@ -2,9 +2,9 @@
   "name": "tasks",
   "version": "1.0.0",
   "description": "",
-  "main": "script.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "node script.js",
+    "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +21,7 @@
     "colors": "^1.4.0",
     "inquirer": "^8.2.0",
     "nodemon": "^2.0.15",
+    "socket.io": "^4.4.1",
     "yargs": "^17.3.1"
   }
 }
